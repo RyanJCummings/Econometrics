@@ -2,10 +2,6 @@ import pandas as pd
 import numpy as np
 
 
-def normalize_revenue_data(revenue_path):
-    raw_data = pd.read_csv(revenue_path, sep=',')
-
-
 def derive_quarterly_cpi(cpi_path):
 
     # Read csv file into pandas dataframe
@@ -33,18 +29,23 @@ def normalize_revenue_data(revenue_path, cpi):
                                  "AWR Quarterly Revenue (Millions USD)": "awr_nom",
                                  "RRGB Date": "rrgb_date",
                                  "RRGB Quarterly Revenue (Millions USD)": "rrbg_nom"})
-    calculate_real_value(nominal_data, cpi)
+    return calculate_real_value(nominal_data, cpi)
 
-    # Add real value column and insert normalized dollar values
-    return nominal_data
 
 def calculate_real_value(data, cpi):
     data['cpi'] = cpi['CPILEGNS'].values
-    data['awr_nom'] = data['awr_nom'].str.replace('$', '')
-    data['numeric_dollars'] = pd.to_numeric(data['awr_nom'])
-    data['awr_real'] = data.eval('numeric_dollars / cpi')
-    print(data)
 
+    data['awr_nom'] = data['awr_nom'].str.replace('$', '')
+    data['awr_nom'] = pd.to_numeric(data['awr_nom'])
+    awr_real = data.eval('awr_nom / cpi * 100').round(1)
+    data.insert(loc=2, column='awr_real', value=awr_real)
+
+    data['rrbg_nom'] = data['rrbg_nom'].str.replace('$', '')
+    data['rrbg_nom'] = pd.to_numeric(data['rrbg_nom'])
+    awr_real = data.eval('rrbg_nom / cpi * 100').round(1)
+    data.insert(loc=5, column='rrbg_real', value=awr_real)
+
+    return data
 
 
 def main():
@@ -53,6 +54,8 @@ def main():
 
     quarterly_cpi = derive_quarterly_cpi(cpi_path)
     real_dollar_data = normalize_revenue_data(revenue_path, quarterly_cpi)
+    real_dollar_data.to_csv('groomed_data.csv', index=False)
+    print(real_dollar_data)
 
 
 main()
