@@ -33,13 +33,16 @@ def normalize_revenue_data(revenue_path, cpi):
 
 
 def calculate_real_value(data, cpi):
+    # Append CPI values to current dataframe
     data['cpi'] = cpi['CPILEGNS'].values
 
+    # create new column with real dollar values for AWR
     data['awr_nom'] = data['awr_nom'].str.replace('$', '')
     data['awr_nom'] = pd.to_numeric(data['awr_nom'])
     awr_real = data.eval('awr_nom / cpi * 100').round(1)
     data.insert(loc=2, column='awr_real', value=awr_real)
 
+    # create new column with real dollar values for Red Robin
     data['rrbg_nom'] = data['rrbg_nom'].str.replace('$', '')
     data['rrbg_nom'] = pd.to_numeric(data['rrbg_nom'])
     awr_real = data.eval('rrbg_nom / cpi * 100').round(1)
