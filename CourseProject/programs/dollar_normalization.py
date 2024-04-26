@@ -50,6 +50,11 @@ def calculate_real_value(data, cpi):
 
     return data
 
+def build_output_for_gretl(full_df, label, column_list):
+    output = full_df[column_list].copy()
+    output.to_csv(label, index=False)
+    print(output)
+
 
 def main():
     cpi_path = "CPILEGNS.csv"
@@ -58,7 +63,7 @@ def main():
     quarterly_cpi = derive_quarterly_cpi(cpi_path)
     real_dollar_data = normalize_revenue_data(revenue_path, quarterly_cpi)
     real_dollar_data.to_csv('groomed_data.csv', index=False)
-    print(real_dollar_data)
 
+    gretl_data_awr = build_output_for_gretl(real_dollar_data, 'AWR.csv', ['awr_date', 'awr_real'])
 
 main()
