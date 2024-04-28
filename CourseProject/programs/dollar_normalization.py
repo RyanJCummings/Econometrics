@@ -33,27 +33,38 @@ def normalize_revenue_data(revenue_path, cpi):
 
 
 def calculate_real_value(data, cpi):
+    # Sort by date ascending
+    data = data.sort_values(by='awr_date')
+
     # Append CPI values to current dataframe
     data['cpi'] = cpi['CPILEGNS'].values
 
     # create new column with real dollar values for AWR
     data['awr_nom'] = data['awr_nom'].str.replace('$', '')
     data['awr_nom'] = pd.to_numeric(data['awr_nom'])
-    awr_real = data.eval('awr_nom / cpi * 100').round(1)
+
+    # Performs the normalization calculation on AWR revenue
+    awr_real = (data['awr_nom'] * data.loc[0,'cpi'] / data['cpi']).round(1)
+
     data.insert(loc=2, column='awr_real', value=awr_real)
 
     # create new column with real dollar values for Red Robin
     data['rrbg_nom'] = data['rrbg_nom'].str.replace('$', '')
     data['rrbg_nom'] = pd.to_numeric(data['rrbg_nom'])
-    awr_real = data.eval('rrbg_nom / cpi * 100').round(1)
-    data.insert(loc=5, column='rrbg_real', value=awr_real)
+    # awr_real = data.eval('rrbg_nom / cpi * 100').round(1)
+
+    # Performs the normalization calculation on AWR revenue
+    rrgb_real = (data['rrbg_nom'] * data.loc[0,'cpi'] / data['cpi']).round(1)
+
+    data.insert(loc=5, column='rrbg_real', value=rrgb_real)
+    data.sort_values(by='awr_date', ascending=False)
 
     return data
 
 def build_output_for_gretl(full_df, label, column_list):
     output = full_df[column_list].copy()
     output.to_csv(label, index=False)
-    print(output)
+    # print(output)
 
 
 def main():
@@ -64,6 +75,8 @@ def main():
     real_dollar_data = normalize_revenue_data(revenue_path, quarterly_cpi)
     real_dollar_data.to_csv('groomed_data.csv', index=False)
 
-    gretl_data_awr = build_output_for_gretl(real_dollar_data, 'AWR.csv', ['awr_date', 'awr_real'])
+    build_output_for_gretl(real_dollar_data, 'AWR.csv', ['awr_real'])
+    build_output_for_gretl(real_dollar_data, 'RRGB.csv', ['rrbg_real'])
+    print(real_dollar_data)
 
 main()
